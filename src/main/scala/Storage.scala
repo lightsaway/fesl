@@ -5,22 +5,26 @@ import cats.implicits._
 import cats.kernel.Monoid
 import state.FSM
 
-trait Extractor[E]{
+trait Extractor[E] {
   def extract: E => UUID
 }
 
 /**
- * Storage class that replays events and inserts events
- * @param LOG - requires instance of [[LogTable]]
- * @param VIEW - requires instance of [[ViewTable]]
- * @param FSM - requires instance of [[FSM]]
- * @param M - requires [[Monoid]] instance for your aggregate
- * @param Ex - requires function that can extract aggregate id from event
- * @tparam F - effect type
- * @tparam E - event type
- * @tparam A - aggregate type
- */
-abstract class Storage[F[_]: Effect, E, A](implicit LOG: LogTable[F,E], VIEW: ViewTable[F,A], FSM: FSM[F,A,E], M: Monoid[A], Ex: Extractor[E]) {
+  * Storage class that replays events and inserts events
+  * @param LOG - requires instance of [[LogTable]]
+  * @param VIEW - requires instance of [[ViewTable]]
+  * @param FSM - requires instance of [[FSM]]
+  * @param M - requires [[Monoid]] instance for your aggregate
+  * @param Ex - requires function that can extract aggregate id from event
+  * @tparam F - effect type
+  * @tparam E - event type
+  * @tparam A - aggregate type
+  */
+abstract class Storage[F[_]: Effect, E, A](implicit LOG: LogTable[F, E],
+                                           VIEW: ViewTable[F, A],
+                                           FSM: FSM[F, A, E],
+                                           M: Monoid[A],
+                                           Ex: Extractor[E]) {
   def logAndInsert(e: E) =
     fs2.Stream.eval(for {
       id <- Ex.extract(e).pure[F]
