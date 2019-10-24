@@ -1,3 +1,5 @@
+package fesl
+
 import java.util.UUID
 
 trait ViewTable[F[_], E] {

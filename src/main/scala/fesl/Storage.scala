@@ -1,16 +1,17 @@
+package fesl
+
 import java.util.UUID
 
 import cats.effect.Effect
 import cats.implicits._
 import cats.kernel.Monoid
-import state.FSM
 
 trait Extractor[E] {
   def extract: E => UUID
 }
 
 /**
-  * Storage class that replays events and inserts events
+  * fesl.Storage class that replays events and inserts events
   * @param LOG - requires instance of [[LogTable]]
   * @param VIEW - requires instance of [[ViewTable]]
   * @param FSM - requires instance of [[FSM]]
@@ -23,6 +24,7 @@ trait Extractor[E] {
 abstract class Storage[F[_]: Effect, E, A](implicit LOG: LogTable[F, E],
                                            VIEW: ViewTable[F, A],
                                            FSM: FSM[F, A, E],
+                                           // its probably good idea to have Const[A,E] instead of Monoid[A]
                                            M: Monoid[A],
                                            Ex: Extractor[E]) {
   def logAndInsert(e: E) =

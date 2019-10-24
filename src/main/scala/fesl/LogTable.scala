@@ -1,4 +1,7 @@
+package fesl
+
 import java.util.UUID
+
 import fs2.Stream
 
 trait LogTable[F[_], E] {

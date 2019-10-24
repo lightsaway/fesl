@@ -2,20 +2,20 @@
 
 ## Prerequisites
 Event sourcing consits of: 
-* LogTable
-* ViewTable
-* FSM 
+* fesl.LogTable
+* fesl.ViewTable
+* fesl.FSM 
 * CQRS 
 
-# LogTable
+# fesl.LogTable
 * Logtable should insert event entry
 * Logtable should be able to read all entries per aggregateID
 
-# ViewTable
+# fesl.ViewTable
 * Should be able to insert compacted views
 * Should be able to read last compacted view
 
-# FSM
+# fesl.FSM
 Finite state machine can be represented in terms of 
 fsm :: I -> E -> S
 Where I is initial state, E is event , S is finite state
@@ -30,7 +30,7 @@ type State[S,A] = S => (S, A)
 Having current state we need to implement functions that accepts event A or events H[A] and returns new state
 ```scala
 import cats.data.StateT
-trait FSM[F[_], E, A] {
+trait fesl.FSM[F[_], E, A] {
   def one(e: A): StateT[F, E, A]
   def many[H[_] ](es: H[A]): StateT[F, E, H[A]]
 }

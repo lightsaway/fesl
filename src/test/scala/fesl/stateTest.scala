@@ -1,8 +1,9 @@
+package fesl
+
 import cats.Eval
 import cats.data.StateT
 import cats.implicits._
-import org.scalatest.{FunSuite, Matchers, matchers}
-import state.FSM
+import org.scalatest.{FunSuite, Matchers}
 
 sealed trait Transaction {
   val money: Int
