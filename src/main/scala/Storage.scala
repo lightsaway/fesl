@@ -9,10 +9,21 @@ trait Extractor[E]{
   def extract: E => UUID
 }
 
-abstract class Storage[F[_]: Effect, EVE, ENT](implicit LOG: LogTable[F,EVE],  VIEW: ViewTable[F,ENT], FSM: FSM[F,ENT,EVE], M: Monoid[ENT], extractor: Extractor[EVE]) {
-  def logAndInsert(e: EVE) =
+/**
+ * Storage class that replays events and inserts events
+ * @param LOG - requires instance of [[LogTable]]
+ * @param VIEW - requires instance of [[ViewTable]]
+ * @param FSM - requires instance of [[FSM]]
+ * @param M - requires [[Monoid]] instance for your aggregate
+ * @param Ex - requires function that can extract aggregate id from event
+ * @tparam F - effect type
+ * @tparam E - event type
+ * @tparam A - aggregate type
+ */
+abstract class Storage[F[_]: Effect, E, A](implicit LOG: LogTable[F,E], VIEW: ViewTable[F,A], FSM: FSM[F,A,E], M: Monoid[A], Ex: Extractor[E]) {
+  def logAndInsert(e: E) =
     fs2.Stream.eval(for {
-      id <- extractor.extract(e).pure[F]
+      id <- Ex.extract(e).pure[F]
       es <- LOG.select(id).compile.toList
       st <- FSM.many(es :+ e).run(M.empty)
       _ <- LOG.insert(e)
