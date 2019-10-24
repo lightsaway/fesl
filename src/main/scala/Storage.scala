@@ -18,4 +18,10 @@ abstract class Storage[F[_]: Effect, EVE, ENT](implicit LOG: LogTable[F,EVE],  V
       _ <- LOG.insert(e)
       _ <- VIEW.insert(st._1)
     } yield st)
+
+  def replay(id: UUID) =
+    fs2.Stream.eval(for {
+      es <- LOG.select(id).compile.toList
+      st <- FSM.many(es).run(M.empty)
+    } yield st)
 }
