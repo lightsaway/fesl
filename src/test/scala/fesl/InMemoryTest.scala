@@ -76,8 +76,7 @@ class InMemoryTest extends org.scalatest.FunSuite with Matchers {
       .toList
       .unsafeRunSync()
       .flatten
-    view.select(events._1).unsafeRunSync().get shouldBe Account(events._1, 30)
-
+    view.select(events._1).unsafeRunSync().get shouldBe Account(events._1, 30, isActive = true, 2)
   }
 
 }
