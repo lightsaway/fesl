@@ -1,11 +1,21 @@
 package fesl
 
+import java.util.UUID
+
 import cats.data.StateT
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
 import cats.syntax.functor._
 import cats.{Foldable, Functor, Monad}
 
+/**
+  * Represents State machine
+  * @tparam F effect type parameter
+  * @tparam ENT - aggregate type
+  * @tparam EVE - event type
+  */
+@scala.annotation.implicitNotFound(
+  "No FSM instance available for [${F}, ${ENT}, ${EVE}]")
 trait FSM[F[_], ENT, EVE] {
   def one(e: EVE): StateT[F, ENT, EVE]
   def many[H[_]: Foldable: Functor](es: H[EVE])(
