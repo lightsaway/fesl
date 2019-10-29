@@ -37,6 +37,7 @@ object Transaction {
         case _ => Eval.later(throw new IllegalStateException(s"invalid operation"))
       }
   }
+
   implicit val fsmIO: FSM[IO, Account, Transaction] = (e: Transaction) =>
     StateT[IO, Account, Transaction] { account =>
       (account, e) match {

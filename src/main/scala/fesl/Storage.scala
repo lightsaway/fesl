@@ -14,7 +14,7 @@ import fesl.ExtractUUID.ExtractUUID
   * @param LOG  - requires instance of [[LogTable]]
   * @param VIEW - requires instance of [[ViewTable]]
   * @param FSM  - requires instance of [[FSM]]
-  * @param M    - requires [[Monoid]] instance for your aggregate
+  * @param M    - requires [[Const[A,E]] instance for your aggregate
   * @param Ex   - requires function that can extract aggregate id from event
   * @tparam F - effect type
   * @tparam E - event type

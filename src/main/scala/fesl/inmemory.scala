@@ -18,7 +18,7 @@ class InMemoryLog[F[_]: Sync: Effect, E](storage: Ref[F, Map[UUID, Seq[E]]])(
       s <- storage.get
       id = extractor(e)
       es = s.getOrElse(id, Seq[E]().empty) :+ e
-      _ <- storage.modify(s => (s + (id -> es), e))
+      _ <- storage.update(s => s + (id -> es))
     } yield e
 
   override def select(id: UUID): fs2.Stream[F, E] =
@@ -47,7 +47,7 @@ class InMemoryView[F[_]: Sync: Effect, E](storage: Ref[F, Map[UUID, E]])(
     extends ViewTable[F, E] {
 
   override def insert(e: E): F[E] =
-    storage.modify(s => (s + (extractor(e) -> e), e))
+    storage.update(s => s + (extractor(e) -> e)).as(e)
   override def select(id: UUID): F[Option[E]] = storage.get.map(_.get(id))
 
 }
