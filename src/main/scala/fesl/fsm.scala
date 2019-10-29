@@ -1,7 +1,4 @@
 package fesl
-
-import java.util.UUID
-
 import cats.data.StateT
 import cats.syntax.flatMap._
 import cats.syntax.foldable._

@@ -2,9 +2,9 @@ package fesl
 
 import java.util.UUID
 
-import cats.{ApplicativeError, Eval, Id, Monad, MonadError}
+import cats.{Eval}
 import cats.data.{Const, StateT}
-import cats.effect.{Effect, IO}
+import cats.effect.{IO}
 import cats.implicits._
 import fesl.ExtractUUID.ExtractUUID
 

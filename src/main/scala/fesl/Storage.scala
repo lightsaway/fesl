@@ -5,7 +5,6 @@ import java.util.UUID
 import cats.data.Const
 import cats.effect.Effect
 import cats.implicits._
-import cats.kernel.Monoid
 import fesl.ExtractUUID.ExtractUUID
 
 /**
