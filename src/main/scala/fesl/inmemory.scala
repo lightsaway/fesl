@@ -33,6 +33,12 @@ class InMemoryLog[F[_]: Sync: Effect, E](storage: Ref[F, Map[UUID, Seq[E]]])(
 object InMemoryLog {
   def createTable[F[_]: Sync, E]: F[Ref[F, Map[UUID, Seq[E]]]] =
     Ref.of(Map[UUID, Seq[E]]().empty)
+
+  def apply[F[_], E](initial: Map[UUID, Seq[E]] = Map[UUID, Seq[E]]().empty)(
+      implicit extractor: ExtractUUID[E],
+      F: Effect[F],
+      M: MonadError[F, Throwable]): F[InMemoryLog[F, E]] =
+    Ref.of[F, Map[UUID, Seq[E]]](initial).map(new InMemoryLog[F, E](_))
 }
 
 class InMemoryView[F[_]: Sync: Effect, E](storage: Ref[F, Map[UUID, E]])(
@@ -49,4 +55,10 @@ class InMemoryView[F[_]: Sync: Effect, E](storage: Ref[F, Map[UUID, E]])(
 object InMemoryView {
   def createTable[F[_]: Sync, E]: F[Ref[F, Map[UUID, E]]] =
     Ref.of(Map[UUID, E]().empty)
+
+  def apply[F[_], E](initial: Map[UUID, E] = Map[UUID, E]().empty)(
+      implicit extractor: ExtractUUID[E],
+      F: Effect[F],
+      M: MonadError[F, Throwable]): F[InMemoryView[F, E]] =
+    Ref.of[F, Map[UUID, E]](initial).map(new InMemoryView[F, E](_))
 }

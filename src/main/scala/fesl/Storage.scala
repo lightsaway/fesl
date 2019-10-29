@@ -30,8 +30,8 @@ class Storage[F[_]: Effect, E, A](implicit LOG: LogTable[F, E],
       id <- Ex(e).pure[F]
       es <- LOG.select(id).compile.toList
       st <- FSM.many(es :+ e).run(M.getConst)
-      _ <- LOG.insert(e)
-      _ <- VIEW.insert(st._1)
+      _  <- LOG.insert(e)
+      _  <- VIEW.insert(st._1)
     } yield st)
 
   def replay(id: UUID) =
