@@ -1,14 +1,17 @@
 package fesl
 import java.util.UUID
 
+import cats.effect.Bracket
 import skunk.{Codec, _}
 import skunk.implicits._
 import skunk.codec.all._
 import fs2.Stream.resource
-import fs2.Stream._
-import skunk.data.{Completion, Type}
+import skunk.data.Type
+import cats.implicits._
 import cats.effect.implicits._
 import fesl.ExtractUUID.ExtractUUID
+import fesl.PgLog.LogEncoder
+import fesl.types.BracketThrow
 
 import scala.util.Try
 
@@ -19,10 +22,14 @@ object codecs {
 }
 import codecs._
 
-class PgView[F[_], E](implicit s: Session[F],
-                      decoder: Decoder[E],
-                      encoder: Codec[E],
-                      extractUUID: ExtractUUID[E])
+object types {
+  type BracketThrow[F[_]] = Bracket[F, Throwable]
+}
+
+class PgView[F[_]: BracketThrow, E](implicit s: Session[F],
+                                    decoder: Decoder[E],
+                                    encoder: Codec[E],
+                                    extractUUID: ExtractUUID[E])
     extends ViewTable[F, E] {
 
   val selectQ: Query[UUID, E] =
@@ -32,21 +39,32 @@ class PgView[F[_], E](implicit s: Session[F],
       WHERE id =  $uuid
     """.query(decoder)
 
-  val insertQ: Command[E ~ UUID] =
+  val insertQ: Command[UUID ~ E] =
     sql"""
-         UPDATE  view
-         SET state = $encoder
-         WHERE id = $uuid
+          INSERT INTO view
+          VALUES ($uuid, $encoder, now())
+          ON CONFLICT (id)
+          DO UPDATE SET state = Excluded.state, datetime = Excluded.state;
        """.command
 
   override def insert(e: E): F[E] =
-    resource(s.prepare(insertQ)).map(_.execute(e ~ extractUUID(e))).compile.drain.as(e)
+    s.prepare(insertQ).use(_.execute(extractUUID(e) ~ e)).as(e)
 
   override def select(id: UUID): F[Option[E]] =
-    resource(s.prepare(selectQ)).map(_.option(id)).head.compile.toList
+    s.prepare(selectQ).use(_.option(id))
 }
-class PgLog[F[_], E](implicit s: Session[F], decoder: Decoder[E], encoder: Codec[E])
+
+object PgLog {
+  type LogEncoder[E] = E => java.util.UUID ~ Long ~ String ~ String
+}
+
+class PgLog[F[_]: BracketThrow, E](implicit s: Session[F],
+                                   decoder: Decoder[E],
+                                   encoder: LogEncoder[E],
+                                   extractUUID: ExtractUUID[E])
     extends LogTable[F, E] {
+
+  // table schema id, seq_nr, event, hash, datetime
 
   val select: Query[UUID, E] =
     sql"""
@@ -58,11 +76,11 @@ class PgLog[F[_], E](implicit s: Session[F], decoder: Decoder[E], encoder: Codec
   val insert: Command[E] =
     sql"""
          INSERT INTO log
-         VALUES ($encoder)
-       """.command
+         VALUES ($uuid, $int8, $text, $text, now())
+       """.command.contramap(encoder)
 
   override def insert(e: E): F[E] =
-    resource(s.prepare(insert)).map(_.execute(e)).compile.drain.as(e)
+    s.prepare(insert).use(_.execute(e)).as(e)
 
   override def select(id: UUID): fs2.Stream[F, E] =
     for {
