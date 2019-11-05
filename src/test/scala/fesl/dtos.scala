@@ -1,13 +1,19 @@
 package fesl
 
+import java.sql.Timestamp
+import java.time.LocalDateTime
 import java.util.UUID
 
-import cats.{Eval}
+import cats.Eval
 import cats.data.{Const, StateT}
-import cats.effect.{IO}
+import cats.effect.IO
 import cats.implicits._
 import fesl.ExtractUUID.ExtractUUID
-
+import skunk.Codec
+import codecs._
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.JsonCodec
+import skunk.codec.all._
 sealed trait Transaction {
   val id: UUID
 }
@@ -19,10 +25,23 @@ case class Block(id: UUID)                      extends Transaction
 
 case class Account(id: UUID, ballance: Int, isActive: Boolean = false, seqNr: Int = 0)
 
-case object Account {
+case class AccountAggregate(id: UUID, state: Account, updated_on: LocalDateTime)
+
+object AccountAggregate {
+  import Account._
+  implicit val idExtractor: ExtractUUID[AccountAggregate] = _.id
+  implicit val codec: Codec[AccountAggregate] =
+    (uuid, json[Account], timestamp(2))
+      .imapN(AccountAggregate.apply)(AccountAggregate.unapply(_).get)
+}
+
+object Account {
   implicit val idExtractor: ExtractUUID[Account] = _.id
   implicit val const =
     Const[Account, Transaction](Account(UUID.randomUUID(), 0))
+  import io.circe.generic.semiauto._
+  implicit val encoder: Encoder[Account] = deriveEncoder[Account]
+  implicit val decoder: Decoder[Account] = deriveDecoder[Account]
 }
 
 object Transaction {

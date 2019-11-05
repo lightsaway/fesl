@@ -10,17 +10,21 @@ import fs2.Stream.resource
 import skunk.data.Type
 import cats.implicits._
 import fesl.ExtractUUID.ExtractUUID
-import fesl.PgLog.LogEncoder
 import fesl.types.BracketThrow
 
 import scala.util.Try
 
+import io.circe.syntax._
+
 object codecs {
-  val uuid: Codec[UUID] = Codec.simple(_.toString,
-                                       x => Try(UUID.fromString(x)).toEither.left.map(_.getMessage),
-                                       Type.uuid)
-  val json: Codec[String] = ???
+
+  val uuid: Codec[UUID] =
+    Codec.simple(_.toString, x => Try(UUID.fromString(x)).toEither.leftMap(_.getMessage), Type.uuid)
+
+  def json[A](implicit encoder: io.circe.Encoder[A], decoder: io.circe.Decoder[A]): Codec[A] =
+    Codec.simple(_.asJson.noSpaces, _.asJson.as[A].leftMap(_.getMessage()), Type.json)
 }
+
 import codecs._
 
 object types {
@@ -32,7 +36,7 @@ object PgView {
                                    CREATE TABLE IF NOT EXISTS aggregate_view (
                                                       id UUID PRIMARY KEY,
                                                       state TEXT,
-                                                      updated_on TIMESTAMP WITH TIME ZONE
+                                                      updated_at TIMESTAMP WITH TIME ZONE
                                 )
                      """.command
     s.execute(cmd).void
@@ -44,18 +48,18 @@ class PgView[F[_]: BracketThrow, E](implicit s: Session[F],
                                     extractUUID: ExtractUUID[E])
     extends ViewTable[F, E] {
 
-  val selectQ: Query[UUID, E] =
+  private val selectQ: Query[UUID, E] =
     sql"""
       select * from aggregate_view
       WHERE id =  $uuid
     """.query(codec)
 
-  val insertQ: Command[E] =
+  private val insertQ: Command[E] =
     sql"""
           INSERT INTO aggregate_view
           VALUES ($codec)
           ON CONFLICT (id)
-          DO UPDATE SET state = Excluded.state, datetime = Excluded.state;
+          DO UPDATE SET state = Excluded.state, updated_at = Excluded.updated_at;
        """.command
 
   override def insert(e: E): F[E] =
@@ -74,7 +78,7 @@ object PgLog {
 
   def createTable[F[_]: BracketThrow](implicit s: Session[F]): F[Unit] = {
     val cmd: Command[Void] = sql"""
-                                   CREATE TABLE IF NOT EXISTS event_log (
+                                   CREATE TABLE event_log (
                                                       id UUID PRIMARY KEY,
                                                       agg_id UUID,
                                                       seq_nr INTEGER
