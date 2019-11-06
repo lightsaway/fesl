@@ -31,7 +31,7 @@ object AccountAggregate {
   import Account._
   implicit val idExtractor: ExtractUUID[AccountAggregate] = _.id
   implicit val codec: Codec[AccountAggregate] =
-    (uuid, json[Account], timestamp(2))
+    (uuid, json[Account], timestamp(6))
       .imapN(AccountAggregate.apply)(AccountAggregate.unapply(_).get)
 }
 

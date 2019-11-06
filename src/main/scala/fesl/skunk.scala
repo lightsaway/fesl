@@ -17,12 +17,16 @@ import scala.util.Try
 import io.circe.syntax._
 
 object codecs {
-
+  import io.circe.parser
   val uuid: Codec[UUID] =
     Codec.simple(_.toString, x => Try(UUID.fromString(x)).toEither.leftMap(_.getMessage), Type.uuid)
 
+  def decocde[A](a: String)(implicit encoder: io.circe.Encoder[A], decoder: io.circe.Decoder[A]) =
+    parser.decode[A](a).leftMap(_.getMessage())
+
   def json[A](implicit encoder: io.circe.Encoder[A], decoder: io.circe.Decoder[A]): Codec[A] =
-    Codec.simple(_.asJson.noSpaces, _.asJson.as[A].leftMap(_.getMessage()), Type.json)
+    Codec.simple(_.asJson.noSpaces, x => decocde[A](x), Type.json)
+
 }
 
 import codecs._
@@ -35,8 +39,8 @@ object PgView {
     val cmd: Command[Void] = sql"""
                                    CREATE TABLE IF NOT EXISTS aggregate_view (
                                                       id UUID PRIMARY KEY,
-                                                      state TEXT,
-                                                      updated_at TIMESTAMP WITH TIME ZONE
+                                                      state JSON,
+                                                      updated_at TIMESTAMP(6)
                                 )
                      """.command
     s.execute(cmd).void
