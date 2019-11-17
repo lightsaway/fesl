@@ -23,6 +23,7 @@ object codecs {
 
   def decocde[A](a: String)(implicit encoder: io.circe.Encoder[A], decoder: io.circe.Decoder[A]) =
     parser.decode[A](a).leftMap(_.getMessage())
+//    "error!!!!".asLeft[A]
 
   def json[A](implicit encoder: io.circe.Encoder[A], decoder: io.circe.Decoder[A]): Codec[A] =
     Codec.simple(_.asJson.noSpaces, x => decocde[A](x), Type.json)
@@ -82,13 +83,13 @@ object PgLog {
 
   def createTable[F[_]: BracketThrow](implicit s: Session[F]): F[Unit] = {
     val cmd: Command[Void] = sql"""
-                                   CREATE TABLE event_log (
-                                                      id UUID PRIMARY KEY,
+                                   CREATE TABLE IF NOT EXISTS event_log (
+                                                      id UUID,
                                                       agg_id UUID,
-                                                      seq_nr INTEGER
                                                       e_type VARCHAR(50),
-                                                      event TEXT,
-                                                      appeared_on TIMESTAMP WITH TIME ZONE
+                                                      event JSON,
+                                                      appeared_on TIMESTAMP(6),
+                                                      PRIMARY KEY(id, agg_id)
                                 )
                      """.command
     s.execute(cmd).void
@@ -108,7 +109,7 @@ class PgLog[F[_]: BracketThrow, E](implicit s: Session[F],
 
   val insert: Command[E] =
     sql"""
-         INSERT INTO log
+         INSERT INTO event_log
          VALUES ($codec)
        """.command
 

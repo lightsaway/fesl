@@ -4,24 +4,14 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 import cats.effect.IO
-import fesl.codecs.decocde
 import skunk.Session
-import natchez.Trace.Implicits.noop
 import org.scalatest.matchers.should.Matchers
 
 class PgViewTest extends PostgresBaseTest with Matchers {
 
-  test("insert one") {
+  test("insert and read from view") {
 
-    implicit val session = Session
-      .single[IO](host = "localhost",
-                  port = container.jdbcUrl.split("/")(2).split(":")(1).toInt,
-                  user = container.username,
-                  database = db,
-                  debug = true)
-      .allocated
-      .unsafeRunSync()
-      ._1
+    implicit val session: Session[IO] = init
 
     val test = for {
       _ <- PgView.createTable[IO]
@@ -43,6 +33,25 @@ class PgViewTest extends PostgresBaseTest with Matchers {
         inUpdated shouldBe updateAg
         outUpdated.get shouldBe updateAg
       }
+    } yield ()
+    test.unsafeRunSync()
+  }
+
+  test("insert and read from log") {
+    import cats.implicits._
+    implicit val session: Session[IO] = init
+    val date                          = LocalDateTime.now()
+
+    val test = for {
+      _ <- PgLog.createTable[IO]
+      id = UUID.randomUUID()
+      events = List(CreateAccount(UUID.randomUUID(), id, 0, date),
+                    Fill(UUID.randomUUID(), id, 2, date),
+                    Block(UUID.randomUUID(), id, date))
+      log = new PgLog[IO, Transaction]()
+      _   <- events.traverse_(log.insert(_))
+      out <- log.select(id).compile.toList
+      _ = out shouldBe events
     } yield ()
     test.unsafeRunSync()
   }

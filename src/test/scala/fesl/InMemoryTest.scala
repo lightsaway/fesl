@@ -1,5 +1,6 @@
 package fesl
 
+import java.time.LocalDateTime
 import java.util.UUID
 
 import cats.effect.IO
@@ -9,12 +10,14 @@ import org.scalatest.matchers.should.Matchers
 class InMemoryTest extends org.scalatest.FunSuite with Matchers {
   implicit val contextShift =
     IO.contextShift(scala.concurrent.ExecutionContext.global)
-
+  val date = LocalDateTime.now()
   test("in memory Log test") {
+
     val firstSeq =
-      IO(UUID.randomUUID()).map(id => id -> Seq(Fill(id, 10), Fill(id, 20)))
+      IO(UUID.randomUUID()).map(id => id -> Seq(Fill(id, id, 10, date), Fill(id, id, 20, date)))
     val secondSeq =
-      IO(UUID.randomUUID()).map(id => id -> Seq(Fill(id, 1), Fill(id, 5), Withdraw(id, 10)))
+      IO(UUID.randomUUID()).map(id =>
+        id -> Seq(Fill(id, id, 1, date), Fill(id, id, 5, date), Withdraw(id, id, 10, date)))
 
     val test = for {
       store   <- InMemoryLog.createTable[IO, Transaction]
@@ -60,9 +63,10 @@ class InMemoryTest extends org.scalatest.FunSuite with Matchers {
     val id = UUID.randomUUID()
 
     val test = for {
-      events <- IO(id).map(id => id -> Seq(AccountCreated(id, 0), Fill(id, 10), Fill(id, 20)))
-      log    <- InMemoryLog[IO, Transaction]()
-      view   <- InMemoryView[IO, Account]()
+      events <- IO(id).map(id =>
+        id -> Seq(CreateAccount(id, id, 0, date), Fill(id, id, 10, date), Fill(id, id, 20, date)))
+      log  <- InMemoryLog[IO, Transaction]()
+      view <- InMemoryView[IO, Account]()
     } yield {
       implicit val l: LogTable[IO, Transaction] = log
       implicit val v: ViewTable[IO, Account]    = view
