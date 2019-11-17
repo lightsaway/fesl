@@ -1,11 +1,13 @@
-package fesl
+package fesl.skunk
 
 import java.time.LocalDateTime
 import java.util.UUID
 
 import cats.effect.IO
-import skunk.Session
+import fesl.core.dtos.{Account, AccountAggregate, Block, CreateAccount, Fill, Transaction}
+import fesl.core.dtos.{Account, AccountAggregate, Block, CreateAccount, Fill}
 import org.scalatest.matchers.should.Matchers
+import skunk.Session
 
 class PgViewTest extends PostgresBaseTest with Matchers {
 

@@ -1,9 +1,9 @@
-package fesl
+package fesl.skunk
 
 import cats.effect.IO
 import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
-import skunk.Session
 import natchez.Trace.Implicits.noop
+import skunk.Session
 abstract class PostgresBaseTest extends org.scalatest.FunSuite with ForAllTestContainer {
   implicit val contextShift =
     IO.contextShift(scala.concurrent.ExecutionContext.global)

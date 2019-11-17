@@ -1,4 +1,5 @@
-package fesl
+package fesl.core
+
 import cats.data.StateT
 import cats.syntax.flatMap._
 import cats.syntax.foldable._

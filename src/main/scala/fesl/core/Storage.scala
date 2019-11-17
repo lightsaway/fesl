@@ -1,14 +1,14 @@
-package fesl
+package fesl.core
 
 import java.util.UUID
 
 import cats.data.Const
 import cats.effect.Effect
 import cats.implicits._
-import fesl.ExtractUUID.ExtractUUID
+import ExtractUUID.ExtractUUID
 
 /**
-  * fesl.Storage class that replays events and inserts events
+  * core.Storage class that replays events and inserts events
   *
   * @param LOG  - requires instance of [[LogTable]]
   * @param VIEW - requires instance of [[ViewTable]]

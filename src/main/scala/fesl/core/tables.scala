@@ -1,4 +1,4 @@
-package fesl
+package fesl.core
 
 import java.util.UUID
 

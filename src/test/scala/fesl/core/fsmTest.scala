@@ -1,9 +1,12 @@
-package fesl
+package fesl.core
 
 import java.time.LocalDateTime
 import java.util.UUID
 
 import cats.implicits._
+import fesl.core.dtos.{Account, Fill, Transaction, Withdraw}
+import fesl.{core, skunk}
+import fesl.core.dtos.{Account, Fill, Transaction, Withdraw}
 import org.scalatest.{FunSuite, Matchers}
 
 class StateTest extends FunSuite with Matchers {

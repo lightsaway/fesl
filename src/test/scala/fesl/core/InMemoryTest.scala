@@ -1,10 +1,12 @@
-package fesl
+package fesl.core
 
 import java.time.LocalDateTime
 import java.util.UUID
 
 import cats.effect.IO
 import cats.implicits._
+import fesl.core.dtos.{Account, CreateAccount, Fill, Transaction, Withdraw}
+import fesl.skunk._
 import org.scalatest.matchers.should.Matchers
 
 class InMemoryTest extends org.scalatest.FunSuite with Matchers {

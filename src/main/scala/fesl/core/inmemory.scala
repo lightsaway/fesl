@@ -1,12 +1,12 @@
-package fesl
+package fesl.core
 
 import java.util.UUID
 
 import cats.MonadError
+import cats.effect.concurrent.Ref
 import cats.effect.{Effect, Sync}
 import cats.implicits._
-import cats.effect.concurrent.Ref
-import fesl.ExtractUUID.ExtractUUID
+import ExtractUUID.ExtractUUID
 import fs2.Stream
 
 class InMemoryLog[F[_]: Sync: Effect, E](storage: Ref[F, Map[UUID, Seq[E]]])(
